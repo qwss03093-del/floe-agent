@@ -38,28 +38,6 @@ struct BridgeProductSetupView: View {
                 }
             }
         }
-        .fileImporter(
-            isPresented: $showPairingPicker,
-            allowedContentTypes: [.propertyList, .xml, .data]
-        ) { result in
-            switch result {
-            case .success(let url):
-                model.importPairing(url)
-            case .failure:
-                model.banner = BridgeProductCopy.noPairingSelected
-            }
-        }
-        .fileImporter(
-            isPresented: $showDDIPicker,
-            allowedContentTypes: [.folder]
-        ) { result in
-            switch result {
-            case .success(let url):
-                model.importDDIFolder(url)
-            case .failure:
-                model.banner = BridgeProductCopy.noImageSelected
-            }
-        }
     }
 
     private var pairingSection: some View {
@@ -88,6 +66,17 @@ struct BridgeProductSetupView: View {
                     systemImage: "doc.badge.plus"
                 )
                 .frame(minHeight: 44, alignment: .leading)
+            }
+            .fileImporter(
+                isPresented: $showPairingPicker,
+                allowedContentTypes: [.propertyList, .xml, .data]
+            ) { result in
+                switch result {
+                case .success(let url):
+                    model.importPairing(url)
+                case .failure:
+                    model.banner = BridgeProductCopy.noPairingSelected
+                }
             }
 
             if model.pairingImported {
@@ -193,6 +182,17 @@ struct BridgeProductSetupView: View {
                 } label: {
                     Label(BridgeProductCopy.importImage, systemImage: "folder.badge.plus")
                         .frame(minHeight: 44, alignment: .leading)
+                }
+                .fileImporter(
+                    isPresented: $showDDIPicker,
+                    allowedContentTypes: [.folder]
+                ) { result in
+                    switch result {
+                    case .success(let url):
+                        model.importDDIFolder(url)
+                    case .failure:
+                        model.banner = BridgeProductCopy.noImageSelected
+                    }
                 }
             }
 

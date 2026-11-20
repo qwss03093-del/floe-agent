@@ -1,0 +1,97 @@
+name: Build Floe iOS Bridge pairing import fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/floe-pairing-import-fix
+    paths:
+      - FloeIOSBridge/**
+      - .github/workflows/build-floe-ios-bridge-import-fix.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: floe-bridge-import-fix-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 90
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+      RUSTUP_TOOLCHAIN: 1.98.1
+      FLOE_BRIDGE_JOBS: "3"
+      FLOE_IDEVICE_JOBS: "3"
+      FLOE_BRIDGE_CACHE: ${{ runner.temp }}/floe-bridge/derived-data
+      FLOE_IDEVICE_CACHE: ${{ runner.temp }}/floe-bridge/idevice
+      FLOE_IDEVICE_SOURCE_ROOT: ${{ github.workspace }}/Local/Scratch/import-fix/idevice
+      FLOE_BRIDGE_SCRATCH_DIR: ${{ github.workspace }}/Local/Scratch/import-fix/build
+      FLOE_BRIDGE_ARTIFACT_DIR: ${{ github.workspace }}/Local/Artifacts/import-fix
+    steps:
+      - name: Check out the exact source
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            FloeIOSBridge
+
+      - name: Check Xcode and install the pinned Rust toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$DEVELOPER_DIR/usr/bin/xcodebuild"
+          xcodebuild -version
+          test "$(xcrun --sdk iphoneos --show-sdk-version)" = 27.1
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal \
+            --target aarch64-apple-ios --component llvm-tools
+          rustc -V
+
+      - name: Build and verify the unsigned device IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash FloeIOSBridge/scripts/build_bridge.sh \
+            --mode product-qualification \
+            --source-ref "$GITHUB_SHA" \
+            --no-generate-project \
+            --ipa-name Floe-iOS-Bridge-1.0.0-import-fix-unsigned.ipa
+          cd "$FLOE_BRIDGE_ARTIFACT_DIR"
+          shasum -a 256 Floe-iOS-Bridge-1.0.0-import-fix-unsigned.ipa \
+            > Floe-iOS-Bridge-1.0.0-import-fix-unsigned.ipa.sha256
+          {
+            echo '## Floe iOS Bridge pairing import candidate'
+            echo "Source commit: $GITHUB_SHA"
+            echo 'Unsigned iPhone/iPad IPA; signing is required before installation.'
+            echo 'The two setup file importers are attached to their own buttons.'
+            echo 'Device behavior still requires verification on the iPad.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the IPA and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: Floe-iOS-Bridge-import-fix-${{ github.sha }}
+          path: |
+            Local/Artifacts/import-fix/Floe-iOS-Bridge-1.0.0-import-fix-unsigned.ipa
+            Local/Artifacts/import-fix/Floe-iOS-Bridge-1.0.0-import-fix-unsigned.ipa.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Keep build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Floe-iOS-Bridge-import-fix-build-logs-${{ github.sha }}
+          path: |
+            Local/Artifacts/import-fix/build-command.txt
+            Local/Artifacts/import-fix/build-test.log
+            Local/Artifacts/import-fix/build-host.log
+            Local/Artifacts/import-fix/core-checks.log
+            Local/Artifacts/import-fix/verify.txt
+            Local/Artifacts/import-fix/package-result.json
+            Local/Scratch/import-fix/build/preflight-check.json
+          if-no-files-found: ignore
+          retention-days: 7

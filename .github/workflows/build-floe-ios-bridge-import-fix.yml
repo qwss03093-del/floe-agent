@@ -25,8 +25,8 @@ jobs:
       RUSTUP_TOOLCHAIN: 1.98.1
       FLOE_BRIDGE_JOBS: "3"
       FLOE_IDEVICE_JOBS: "3"
-      FLOE_BRIDGE_CACHE: ${{ runner.temp }}/floe-bridge/derived-data
-      FLOE_IDEVICE_CACHE: ${{ runner.temp }}/floe-bridge/idevice
+      FLOE_BRIDGE_CACHE: ${{ github.workspace }}/Local/Scratch/import-fix/derived-data
+      FLOE_IDEVICE_CACHE: ${{ github.workspace }}/Local/Scratch/import-fix/idevice-cache
       FLOE_IDEVICE_SOURCE_ROOT: ${{ github.workspace }}/Local/Scratch/import-fix/idevice
       FLOE_BRIDGE_SCRATCH_DIR: ${{ github.workspace }}/Local/Scratch/import-fix/build
       FLOE_BRIDGE_ARTIFACT_DIR: ${{ github.workspace }}/Local/Artifacts/import-fix

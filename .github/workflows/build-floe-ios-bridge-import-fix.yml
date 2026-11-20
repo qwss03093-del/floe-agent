@@ -54,11 +54,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash FloeIOSBridge/scripts/build_bridge.sh \
-            --mode product-qualification \
-            --source-ref "$GITHUB_SHA" \
-            --no-generate-project \
-            --ipa-name Floe-iOS-Bridge-1.0.0-import-fix-unsigned.ipa
+          bash FloeIOSBridge/scripts/build_cloud_candidate.sh
           cd "$FLOE_BRIDGE_ARTIFACT_DIR"
           shasum -a 256 Floe-iOS-Bridge-1.0.0-import-fix-unsigned.ipa \
             > Floe-iOS-Bridge-1.0.0-import-fix-unsigned.ipa.sha256
@@ -92,6 +88,9 @@ jobs:
             Local/Artifacts/import-fix/core-checks.log
             Local/Artifacts/import-fix/verify.txt
             Local/Artifacts/import-fix/package-result.json
+            Local/Artifacts/import-fix/native-tests.log
+            Local/Artifacts/import-fix/native-build.log
+            Local/Artifacts/import-fix/native-source-build.json
             Local/Scratch/import-fix/build/preflight-check.json
           if-no-files-found: ignore
           retention-days: 7

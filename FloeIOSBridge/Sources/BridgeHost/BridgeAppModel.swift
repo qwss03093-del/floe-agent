@@ -167,6 +167,18 @@ final class BridgeAppModel: ObservableObject {
             prototypeToken = try? BridgeInstallToken.loadOrCreate(account: BridgeInstallToken.fileChannelAccount)
         }
 #endif
+        // Private packages add this resource locally after the public build.
+        // Keep existing records and reuse the document import validation/storage.
+        if !pairing.isImported,
+           let bundledPairing = Bundle.main.url(forResource: "FloeBundledPairing", withExtension: "plist") {
+            do {
+                try pairing.importFile(from: bundledPairing)
+                BridgeLog.shared.append("bundled_pairing_imported")
+            } catch {
+                banner = error.localizedDescription
+                BridgeLog.shared.append("bundled_pairing_import_failed")
+            }
+        }
         pairingImported = pairing.isImported
         installProductHandlers()
         try? rpcHost.setLANEnabled(productLANEnabled)
